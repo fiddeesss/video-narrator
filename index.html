@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrate — watch &amp; narrate videos</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ AUTH ============ -->
+  <section id="auth-view" class="view hidden">
+    <div class="card auth-card">
+      <h1>🎙️ Narrate</h1>
+      <p class="sub">Watch a short video, then record what's happening in it. No editing, just talk naturally.</p>
+
+      <form id="email-form" class="stack">
+        <label for="email">Your email</label>
+        <input id="email" type="email" required placeholder="you@example.com" autocomplete="email">
+        <button type="submit" id="send-code-btn" class="btn primary">Send code</button>
+      </form>
+
+      <form id="code-form" class="stack hidden">
+        <label for="code">Enter the 6-digit code from your email</label>
+        <input id="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required placeholder="000000" autocomplete="one-time-code">
+        <button type="submit" id="verify-btn" class="btn primary">Verify &amp; start</button>
+        <button type="button" id="back-btn" class="btn ghost">← Different email</button>
+      </form>
+
+      <p id="auth-msg" class="msg"></p>
+    </div>
+  </section>
+
+  <!-- ============ WORK ============ -->
+  <section id="work-view" class="view hidden">
+    <header class="topbar">
+      <div class="brand">🎙️ Narrate</div>
+      <div class="userbox">
+        <span id="user-email" class="email"></span>
+        <button id="logout-btn" class="btn ghost small">Log out</button>
+      </div>
+    </header>
+
+    <div id="queue-progress" class="progressbar"><div id="queue-fill" class="progressfill"></div></div>
+
+    <main class="work">
+      <div id="video-stage" class="card stage">
+        <div class="stage-head">
+          <h2 id="video-title">Loading…</h2>
+          <span id="queue-label" class="badge">0 / 0</span>
+        </div>
+        <video id="player" controls playsinline preload="metadata"></video>
+
+        <div id="recorder" class="recorder">
+          <div id="rec-status" class="rec-status idle">Press record, watch the video, and describe what's happening.</div>
+          <div id="rec-timer" class="rec-timer hidden">0:00</div>
+          <div class="rec-controls">
+            <button id="record-btn" class="btn primary big">🔴 Start recording</button>
+            <button id="stop-btn" class="btn danger big hidden">⏹ Stop &amp; submit</button>
+            <button id="retry-btn" class="btn ghost big hidden">↺ Discard &amp; retry</button>
+          </div>
+        </div>
+
+        <div id="submit-state" class="submit-state hidden">
+          <div class="spinner"></div>
+          <p>Uploading your narration…</p>
+        </div>
+
+        <div id="done-state" class="submit-state hidden">
+          <p>✅ Narration submitted!</p>
+          <button id="next-btn" class="btn primary">Next video →</button>
+        </div>
+      </div>
+
+      <div id="empty-state" class="card hidden">
+        <h2>🎉 All done!</h2>
+        <p>You've narrated every video. Check back later for more.</p>
+        <button id="refresh-btn" class="btn primary">Refresh</button>
+      </div>
+    </main>
+  </section>
+
+  <!-- ============ ERROR / UNSUPPORTED ============ -->
+  <div id="error-toast" class="toast hidden"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./app.js"></script>
+</body>
+</html>

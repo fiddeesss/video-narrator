@@ -1,0 +1,178 @@
+/* video-narrator — clean, mobile-first */
+:root {
+  --bg: #0f1117;
+  --card: #181b24;
+  --card-2: #1f2330;
+  --border: #2a2f3d;
+  --text: #e8eaf0;
+  --muted: #9aa3b5;
+  --accent: #4f8cff;
+  --accent-2: #7c5cff;
+  --danger: #ff5c5c;
+  --ok: #34d399;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: radial-gradient(1200px 600px at 70% -10%, #1a1f31 0%, var(--bg) 55%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.hidden { display: none !important; }
+
+.view { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ---------- auth ---------- */
+.auth-card {
+  max-width: 420px;
+  margin: auto;
+  padding: 40px 32px;
+}
+.auth-card h1 { font-size: 28px; margin-bottom: 8px; }
+.auth-card .sub { color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+
+/* ---------- cards & forms ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.stack label { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+input[type="email"], input[type="text"] {
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 16px;
+  padding: 12px 14px;
+  width: 100%;
+  outline: none;
+}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,140,255,.2); }
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 18px;
+  transition: transform .06s ease, opacity .15s;
+  color: var(--text);
+}
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.btn.ghost { background: var(--card-2); border: 1px solid var(--border); }
+.btn.danger { background: var(--danger); }
+.btn.small { padding: 6px 12px; font-size: 13px; }
+.btn.big { padding: 14px 22px; font-size: 16px; }
+
+.msg { min-height: 20px; font-size: 14px; margin-top: 8px; }
+.msg.error { color: var(--danger); }
+.msg.ok { color: var(--ok); }
+
+/* ---------- topbar ---------- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,17,23,.7);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.brand { font-weight: 700; font-size: 17px; }
+.userbox { display: flex; align-items: center; gap: 12px; }
+.email { color: var(--muted); font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- progress ---------- */
+.progressbar { height: 4px; background: var(--card-2); }
+.progressfill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .4s ease; }
+
+/* ---------- work ---------- */
+.work { flex: 1; padding: 24px 16px; max-width: 760px; width: 100%; margin: 0 auto; }
+.stage-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; }
+.stage-head h2 { font-size: 18px; line-height: 1.3; }
+.badge {
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 16/9; }
+
+.recorder { margin-top: 20px; }
+.rec-status { font-size: 15px; color: var(--muted); text-align: center; padding: 8px 0; }
+.rec-status.recording { color: var(--danger); font-weight: 600; }
+.rec-timer {
+  font-size: 40px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 12px;
+  color: var(--text);
+}
+.rec-controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+/* pulse while recording */
+.rec-status.recording::before {
+  content: "● ";
+  animation: pulse 1s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+
+/* ---------- submit / done ---------- */
+.submit-state { text-align: center; padding: 32px 0; }
+.submit-state p { color: var(--muted); margin-bottom: 16px; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--card-2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 14px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--danger);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 90vw;
+  text-align: center;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+
+#empty-state { text-align: center; padding: 48px 24px; }
+#empty-state h2 { margin-bottom: 10px; }
+#empty-state p { color: var(--muted); margin-bottom: 20px; }
+
+@media (max-width: 480px) {
+  .work { padding: 16px 10px; }
+  .auth-card { padding: 32px 20px; }
+}
