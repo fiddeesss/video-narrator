@@ -36,24 +36,6 @@ insert into public.vn_videos (id, title, url, sort_order) values
 
 `active = true` to show, `false` to hide. Currently seeded with 2 sample videos.
 
-## Admin tracking page
-
-Read-only dashboard at **https://fiddeesss.github.io/video-narrator/admin.html** —
-see who narrated what, when, and play back each recording inline.
-
-- **Access:** email OTP login, then a server-side check via the `vn_is_admin`
-  RPC. Only emails in the `vn_admins` table get the dashboard; everyone else
-  sees "Not authorized".
-- **Add an admin** (Supabase dashboard → SQL editor):
-
-  ```sql
-  insert into public.vn_admins (email) values ('you@example.com');
-  ```
-
-- **Data:** the page calls `vn_is_admin` (boolean) and
-  `vn_admin_list_narrations` (rows ordered by `created_at desc`). Tracking only —
-  no approve/reject, editing, or payout actions.
-
 ## Reviewing narrations
 
 All narrations are in `vn_narrations`; audio is publicly fetchable via `audio_url`.
@@ -88,8 +70,24 @@ order by n.created_at desc;
 
 - Default Supabase SMTP for OTP emails (rate-limited) — switch to Resend before
   heavy traffic.
-- Admin UI is read-only tracking — no QC/flagging, no payouts.
 - No QC/flagging, no payouts, no text-narration option (voice-only by design).
 - Runs on the GIG support bot's Supabase project — move to a dedicated project
   before a real launch (free tier is at its 2-project limit).
 - MediaRecorder needs Chrome/Safari on desktop or iOS 14.3+/Android Chrome.
+
+## Data integrity (added after QA)
+
+`vn_narrations` has two constraints beyond the primary key:
+- `unique (user_id, video_id)` — a user can't submit the same video twice
+  (client shows it as "already done" via a 23505-handled insert, no error toast).
+- `foreign key (video_id) references vn_videos(id)` — rejects narrations for
+  videos that don't exist in the catalog (23503 on violation).
+
+The "Discard & retry" button previously called the same stop handler as
+"Stop & submit", silently uploading and persisting an empty 0-second
+narration. Fixed: `stopRecording(discard)` now takes an explicit flag, and
+the discard path returns before building the audio blob or touching the
+network. Recording MIME type also now falls through webm → mp4 → ogg
+candidates (previously webm-only, which doesn't exist on some browsers) and
+the upload's content-type/extension match what `MediaRecorder` actually
+produced instead of being hardcoded to `.webm`.
