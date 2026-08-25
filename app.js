@@ -19,6 +19,9 @@
     timerInterval: null,
     timerSec: 0,
     submitting: false,
+    pendingBlob: null, // recorded audio awaiting user review (listen-before-submit)
+    pendingMime: "",
+    previewUrl: null,  // object URL for the pending blob
   };
 
   // ---- DOM refs ----
@@ -35,6 +38,8 @@
     videoTitle: $("video-title"), player: $("player"),
     recStatus: $("rec-status"), recTimer: $("rec-timer"),
     recordBtn: $("record-btn"), stopBtn: $("stop-btn"), retryBtn: $("retry-btn"),
+    previewState: $("preview-state"), previewAudio: $("preview-audio"),
+    submitFinalBtn: $("submit-final-btn"), rerecordBtn: $("rerecord-btn"),
     submitState: $("submit-state"), doneState: $("done-state"), nextBtn: $("next-btn"),
     emptyState: $("empty-state"), refreshBtn: $("refresh-btn"),
     toast: $("error-toast"),
@@ -199,6 +204,7 @@
     state.chunks = [];
     state.timerSec = 0;
     clearInterval(state.timerInterval);
+    clearPendingPreview();
     el.recTimer.classList.add("hidden");
     el.recTimer.textContent = "0:00";
     el.recordBtn.classList.remove("hidden");
@@ -209,6 +215,26 @@
     el.submitState.classList.add("hidden");
     el.doneState.classList.add("hidden");
     el.recordBtn.disabled = false;
+  }
+
+  function clearPendingPreview() {
+    if (state.previewUrl) {
+      URL.revokeObjectURL(state.previewUrl);
+      state.previewUrl = null;
+    }
+    state.pendingBlob = null;
+    state.pendingMime = "";
+    el.previewAudio.removeAttribute("src");
+    el.previewAudio.load();
+    el.previewState.classList.add("hidden");
+  }
+
+  function showPreview(blob, mimeType) {
+    state.pendingBlob = blob;
+    state.pendingMime = mimeType;
+    state.previewUrl = URL.createObjectURL(blob);
+    el.previewAudio.src = state.previewUrl;
+    el.previewState.classList.remove("hidden");
   }
 
   // ---- recording ----
@@ -280,17 +306,33 @@
     el.stopBtn.classList.add("hidden");
     el.retryBtn.classList.add("hidden");
     el.recStatus.classList.remove("recording");
+    el.recStatus.textContent = "Recording finished — listen to it, then submit or re-record.";
+    showPreview(blob, mimeType);
+  }
+
+  function submitPending() {
+    if (!state.pendingBlob || state.submitting) return;
+    const blob = state.pendingBlob;
+    const mimeType = state.pendingMime;
+    clearPendingPreview();
+    el.recordBtn.classList.add("hidden");
+    el.stopBtn.classList.add("hidden");
+    el.retryBtn.classList.add("hidden");
     el.recStatus.textContent = "Uploading…";
     state.submitting = true;
     el.submitState.classList.remove("hidden");
-    try {
-      await submitNarration(blob, mimeType);
-    } catch (e) {
+    submitNarration(blob, mimeType).catch((e) => {
       state.submitting = false;
       el.submitState.classList.add("hidden");
       resetRecorderUI();
       showToast("Upload failed: " + e.message + " — press record to try again.");
-    }
+    });
+  }
+
+  function reRecord() {
+    if (state.submitting) return;
+    clearPendingPreview();
+    resetRecorderUI();
   }
 
   async function submitNarration(blob, mimeType) {
@@ -357,6 +399,8 @@
   el.retryBtn.addEventListener("click", () => {
     stopRecording(/* discard */ true);
   });
+  el.submitFinalBtn.addEventListener("click", submitPending);
+  el.rerecordBtn.addEventListener("click", reRecord);
   el.nextBtn.addEventListener("click", () => {
     el.doneState.classList.add("hidden");
     renderQueue();

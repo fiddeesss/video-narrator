@@ -130,6 +130,17 @@ video { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 16/9; 
 }
 .rec-controls { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
+/* preview (listen before submit) */
+.preview-state { margin-top: 18px; text-align: center; }
+.preview-title { font-size: 15px; color: var(--text); margin-bottom: 12px; }
+.preview-audio {
+  width: 100%;
+  max-width: 440px;
+  height: 44px;
+  margin: 0 auto 16px;
+  display: block;
+}
+
 /* pulse while recording */
 .rec-status.recording::before {
   content: "● ";

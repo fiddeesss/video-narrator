@@ -57,8 +57,17 @@
           <div id="rec-timer" class="rec-timer hidden">0:00</div>
           <div class="rec-controls">
             <button id="record-btn" class="btn primary big">🔴 Start recording</button>
-            <button id="stop-btn" class="btn danger big hidden">⏹ Stop &amp; submit</button>
+            <button id="stop-btn" class="btn danger big hidden">⏹ Stop</button>
             <button id="retry-btn" class="btn ghost big hidden">↺ Discard &amp; retry</button>
+          </div>
+
+          <div id="preview-state" class="preview-state hidden">
+            <div class="preview-title">🎧 Listen to your recording, then submit it or re-record.</div>
+            <audio id="preview-audio" class="preview-audio" controls preload="metadata"></audio>
+            <div class="rec-controls">
+              <button id="submit-final-btn" class="btn primary big">✅ Submit</button>
+              <button id="rerecord-btn" class="btn ghost big">↺ Re-record</button>
+            </div>
           </div>
         </div>
 
