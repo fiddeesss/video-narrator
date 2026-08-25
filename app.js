@@ -155,7 +155,18 @@
       state.doneIds = new Set((nRes.data || []).map((r) => r.video_id));
       renderQueue();
     } catch (e) {
-      showToast("Could not load videos: " + e.message);
+      // Persistent, visible error — the 4s toast hid the actual failure.
+      el.recStatus.classList.remove("recording");
+      el.recStatus.textContent =
+        "⚠️ Could not load videos: " + (e && e.message ? e.message : String(e)) +
+        " — click Refresh below or reload the page.";
+      const retry = document.createElement("button");
+      retry.className = "btn ghost small";
+      retry.textContent = "Retry";
+      retry.style.marginLeft = "10px";
+      retry.addEventListener("click", loadQueue);
+      el.recStatus.parentElement.appendChild(retry);
+      showToast("Could not load videos: " + (e && e.message ? e.message : String(e)), 8000);
     }
   }
 
