@@ -15,6 +15,7 @@
     recorder: null,
     chunks: [],
     recording: false,
+    discarding: false, // true while a stop() is a discard, not a submit
     timerInterval: null,
     timerSec: 0,
     submitting: false,
@@ -57,6 +58,13 @@
   }
   function storagePublicUrl(path) {
     return SUPABASE_URL + "/storage/v1/object/public/vn-narrations/" + path;
+  }
+  function extForMime(mime) {
+    if (!mime) return "webm";
+    if (mime.includes("mp4") || mime.includes("m4a") || mime.includes("aac")) return "m4a";
+    if (mime.includes("ogg")) return "ogg";
+    if (mime.includes("mpeg") || mime.includes("mp3")) return "mp3";
+    return "webm";
   }
 
   // ---- views ----
@@ -178,11 +186,12 @@
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : "";
+      const candidates = [
+        "audio/webm;codecs=opus", "audio/webm",
+        "audio/mp4;codecs=mp4a.40.2", "audio/mp4",
+        "audio/ogg;codecs=opus", "audio/ogg",
+      ];
+      const mime = candidates.find((c) => MediaRecorder.isTypeSupported(c)) || "";
       state.recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       state.chunks = [];
       state.recorder.ondataavailable = (e) => { if (e.data.size) state.chunks.push(e.data); };
@@ -210,17 +219,29 @@
     }
   }
 
-  function stopRecording() {
+  function stopRecording(discard) {
     if (!state.recorder || !state.recording) return;
     state.recording = false;
+    state.discarding = !!discard;
     clearInterval(state.timerInterval);
     state.recorder.stop();
     state.recorder.stream.getTracks().forEach((t) => t.stop());
   }
 
   async function onRecordingStopped() {
-    const blob = new Blob(state.chunks, { type: state.recorder.mimeType || "audio/webm" });
+    const wasDiscarding = state.discarding;
+    const mimeType = state.recorder.mimeType || "audio/webm";
+    const chunks = state.chunks;
     state.recorder = null;
+    state.discarding = false;
+
+    if (wasDiscarding) {
+      // Discard: drop the audio, do NOT upload or submit anything.
+      resetRecorderUI();
+      return;
+    }
+
+    const blob = new Blob(chunks, { type: mimeType });
     el.recordBtn.classList.add("hidden");
     el.stopBtn.classList.add("hidden");
     el.retryBtn.classList.add("hidden");
@@ -229,7 +250,7 @@
     state.submitting = true;
     el.submitState.classList.remove("hidden");
     try {
-      await submitNarration(blob);
+      await submitNarration(blob, mimeType);
     } catch (e) {
       state.submitting = false;
       el.submitState.classList.add("hidden");
@@ -238,16 +259,17 @@
     }
   }
 
-  async function submitNarration(blob) {
+  async function submitNarration(blob, mimeType) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("not signed in");
     const v = state.current;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const path = user.id + "/" + v.id + "-" + stamp + ".webm";
+    const ext = extForMime(mimeType);
+    const path = user.id + "/" + v.id + "-" + stamp + "." + ext;
 
     const { error: upErr } = await supabase.storage
       .from("vn-narrations")
-      .upload(path, blob, { contentType: "audio/webm", upsert: false });
+      .upload(path, blob, { contentType: mimeType || "audio/webm", upsert: false });
     if (upErr) throw upErr;
 
     const { error: insErr } = await supabase
@@ -260,7 +282,20 @@
         duration_sec: state.timerSec,
         status: "submitted",
       });
-    if (insErr) throw insErr;
+    if (insErr) {
+      // Unique violation (23505) = this video was already narrated by this user
+      // (e.g. a second tab, a double-submit race). Not an error worth alarming
+      // over — just treat it as already-done and move on.
+      if (insErr.code === "23505") {
+        state.doneIds.add(v.id);
+        el.submitState.classList.add("hidden");
+        el.doneState.classList.remove("hidden");
+        state.submitting = false;
+        renderQueue();
+        return;
+      }
+      throw insErr;
+    }
 
     state.doneIds.add(v.id);
     el.submitState.classList.add("hidden");
@@ -284,10 +319,9 @@
     setAuthMsg("");
   });
   el.recordBtn.addEventListener("click", startRecording);
-  el.stopBtn.addEventListener("click", stopRecording);
+  el.stopBtn.addEventListener("click", () => stopRecording(false));
   el.retryBtn.addEventListener("click", () => {
-    stopRecording();
-    resetRecorderUI();
+    stopRecording(/* discard */ true);
   });
   el.nextBtn.addEventListener("click", () => {
     el.doneState.classList.add("hidden");
