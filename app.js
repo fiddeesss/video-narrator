@@ -3,7 +3,7 @@
   "use strict";
 
   const SUPABASE_URL = "https://lbzcvnvucdqfyubipjxj.supabase.co";
-  const SUPABASE_ANON_KEY = "ANON_KEY_PLACEHOLDER"; // injected at deploy time
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiemN2bnZ1Y2RxZnl1YmlwanhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDI1ODYsImV4cCI6MjEwMjcxODU4Nn0.zbBQVXteV-AXsWgHpf0xmU_40q6nsb9Vznx0EQ0fW7k"; // injected at deploy time
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
