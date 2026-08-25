@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrate — Admin tracking</title>
+<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ AUTH ============ -->
+  <section id="auth-view" class="view hidden">
+    <div class="card auth-card">
+      <h1>🔐 Narrate Admin</h1>
+      <p class="sub">Tracking dashboard for narration submissions. Sign in with your admin email to view.</p>
+
+      <form id="email-form" class="stack">
+        <label for="email">Your email</label>
+        <input id="email" type="email" required placeholder="you@example.com" autocomplete="email">
+        <button type="submit" id="send-code-btn" class="btn primary">Send code</button>
+      </form>
+
+      <form id="code-form" class="stack hidden">
+        <label for="code">Enter the 6-digit code from your email</label>
+        <input id="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required placeholder="000000" autocomplete="one-time-code">
+        <button type="submit" id="verify-btn" class="btn primary">Verify &amp; view dashboard</button>
+        <button type="button" id="back-btn" class="btn ghost">← Different email</button>
+      </form>
+
+      <p id="auth-msg" class="msg"></p>
+    </div>
+  </section>
+
+  <!-- ============ DENIED ============ -->
+  <section id="denied-view" class="view hidden">
+    <div class="card auth-card">
+      <h1>⛔ Not authorized</h1>
+      <p class="sub">This area is for admins only. Your account isn't on the admin list.</p>
+      <div class="stack">
+        <button id="denied-logout-btn" class="btn ghost">Log out</button>
+        <a href="index.html" class="btn ghost center-link">← Back to worker site</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="dash-view" class="view hidden">
+    <header class="topbar">
+      <div class="brand">🎙️ Narrate <span class="badge">Admin</span></div>
+      <div class="userbox">
+        <span id="user-email" class="email"></span>
+        <button id="refresh-btn" class="btn ghost small">Refresh</button>
+        <button id="logout-btn" class="btn ghost small">Log out</button>
+      </div>
+    </header>
+
+    <main class="work dash">
+      <div class="dash-head">
+        <h2>Submission tracking</h2>
+        <a href="index.html" class="back-link">← Back to worker site</a>
+      </div>
+
+      <div class="stats-row">
+        <div class="stats-card"><div id="stat-total" class="stat-num">—</div><div class="stat-label">Total narrations</div></div>
+        <div class="stats-card"><div id="stat-narrators" class="stat-num">—</div><div class="stat-label">Unique narrators</div></div>
+        <div class="stats-card"><div id="stat-videos" class="stat-num">—</div><div class="stat-label">Distinct videos</div></div>
+        <div class="stats-card"><div id="stat-latest" class="stat-num small">—</div><div class="stat-label">Latest submission</div></div>
+      </div>
+
+      <div class="card table-card">
+        <div id="loading-state" class="table-note">
+          <div class="spinner"></div>
+          <p>Loading narrations…</p>
+        </div>
+        <div id="empty-state" class="table-note hidden">
+          <p>📭 No narrations yet. When workers submit audio, it will show up here.</p>
+        </div>
+        <div id="error-state" class="table-note hidden">
+          <p class="msg error" id="error-msg"></p>
+          <button id="retry-btn" class="btn ghost small">Try again</button>
+        </div>
+        <div id="table-wrap" class="table-wrap hidden">
+          <table class="narrations">
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>Narrator</th>
+                <th>Video</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Audio</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="foot-note">Read-only tracking view — no approval, editing, or payout actions.</p>
+    </main>
+  </section>
+
+  <!-- ============ ERROR ============ -->
+  <div id="error-toast" class="toast hidden"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./admin.js"></script>
+</body>
+</html>
