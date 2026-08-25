@@ -82,19 +82,25 @@
 
   // ---- auth flow ----
   async function sendCode(email) {
-    setAuthMsg("Sending code…");
+    setAuthMsg("Sending sign-in link…");
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: window.location.origin + window.location.pathname,
+        },
       });
       if (error) throw error;
       el.emailForm.classList.add("hidden");
       el.codeForm.classList.remove("hidden");
-      setAuthMsg("Code sent to " + email + ". Check your inbox.", "ok");
-      el.code.focus();
+      setAuthMsg(
+        "Check your inbox for an email from Supabase and click the link in it — " +
+        "it'll bring you right back here signed in. (If your email also shows a 6-digit code, you can enter it below instead.)",
+        "ok"
+      );
     } catch (e) {
-      setAuthMsg("Failed to send code: " + e.message, "error");
+      setAuthMsg("Failed to send link: " + e.message, "error");
     }
   }
 
@@ -108,7 +114,24 @@
       setAuthMsg("");
       initWork();
     } catch (e) {
-      setAuthMsg("Wrong or expired code: " + e.message, "error");
+      setAuthMsg("Wrong or expired code — or just click the link in the email instead: " + e.message, "error");
+    }
+  }
+
+  // Handle the redirect back from the magic-link email (PKCE: ?code=... in the URL).
+  async function tryMagicLinkLogin() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return false;
+    try {
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+      // Clean the ?code= off the URL either way so a refresh doesn't retry it.
+      window.history.replaceState({}, "", window.location.pathname);
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      showToast("Sign-in link failed: " + e.message);
+      return false;
     }
   }
 
@@ -335,6 +358,7 @@
 
   // ---- boot ----
   (async function boot() {
+    await tryMagicLinkLogin();
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       initWork();
